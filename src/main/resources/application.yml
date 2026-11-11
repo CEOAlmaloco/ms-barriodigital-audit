@@ -16,6 +16,26 @@ spring:
     # Solo kafka-admin crea topics. Audit no declara NewTopic.
     admin:
       auto-create: false
+    consumer:
+      group-id: audit-group
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      max-poll-records: 50
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+    listener:
+      ack-mode: record
+      concurrency: 3
+
   jackson:
     deserialization:
       accept-float-as-int: false

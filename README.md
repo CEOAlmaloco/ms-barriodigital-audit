@@ -10,6 +10,13 @@ Oracle Autonomous, el mismo patrón que `ms-barriodigital-requests`: `.env` loca
 
 Dependencias base: Spring Boot 3.3.5, Java 21, `spring-kafka`, `data-jpa`, `web`, `actuator` y driver Oracle (+ wallet).
 
+## Consumidor `audit.timeline` (EP3-41)
+
+- Grupo `audit-group`, concurrencia 3, DLT `audit.timeline.audit.DLT`.
+- Guarda `resourceType`, `resourceId`, `action`, `before`, `after`, `result` y `sourceIp` en `audit_entries` (`uk_audit_entries_event_id`).
+- `AuditTrailService` no conoce Kafka: el listener valida y delega.
+
+
 ## Arranque
 
 1. Copiá `.env.example` a `.env` y completá Oracle (podés copiar los valores de requests).
