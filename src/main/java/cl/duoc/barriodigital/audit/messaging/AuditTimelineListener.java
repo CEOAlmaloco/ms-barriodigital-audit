@@ -60,22 +60,14 @@ public class AuditTimelineListener {
         try {
             auditTrailService.recordTimelineEvent(command);
         } catch (DataIntegrityViolationException ex) {
-            if (isEventIdUniqueViolation(ex)) {
-                log.info(
-                        "duplicado topic={} consumidor=audit eventId={}",
-                        TOPIC,
-                        command.eventId());
-                return;
+            if (!DuplicateEvents.isDuplicate(ex)) {
+                throw ex;
             }
-            throw ex;
+            log.info(
+                    "duplicado topic={} consumidor=audit eventId={}",
+                    TOPIC,
+                    command.eventId());
         }
-    }
-
-    private static boolean isEventIdUniqueViolation(DataIntegrityViolationException ex) {
-        String message = String.valueOf(ex.getMostSpecificCause().getMessage()).toLowerCase();
-        return message.contains("uk_audit_entries_event_id")
-                || message.contains("event_id")
-                || message.contains("unique");
     }
 
     private String peek(String json, String field) {

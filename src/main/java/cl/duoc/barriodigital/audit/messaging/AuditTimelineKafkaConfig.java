@@ -12,68 +12,110 @@ import org.springframework.kafka.listener.ConsumerRecordRecoverer;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
-import org.springframework.util.backoff.BackOff;
+import org.springframework.kafka.support.serializer.DeserializationException;
 
 /**
  * Errores del consumidor de audit.timeline: reintentos 1/2/4 s y DLT (EP3-02 §8).
+ *
+ * <p>Si la DLT no confirma, el recoverer relanza: el offset no se confirma y la partición se detiene
+ * hasta que la DLT responda. El log {@code evento-muerto} solo se escribe después del envío exitoso.
  */
 @Configuration
 public class AuditTimelineKafkaConfig {
 
     public static final String DLT_TOPIC = "audit.timeline.audit.DLT";
 
+    static final int MAX_RETRIES = 3;
+    static final int MAX_ATTEMPTS = MAX_RETRIES + 1;
+    private static final int MAX_REASON_LENGTH = 300;
+
     private static final Logger log = LoggerFactory.getLogger(AuditTimelineKafkaConfig.class);
 
     @Bean
-    CommonErrorHandler auditTimelineErrorHandler(KafkaOperations<String, String> kafkaOperations) {
-        DeadLetterPublishingRecoverer dltRecoverer = new DeadLetterPublishingRecoverer(
+    CommonErrorHandler auditTimelineErrorHandler(
+            KafkaOperations<String, String> kafkaOperations,
+            TimelineEventMapper mapper) {
+        DeadLetterPublishingRecoverer dltPublisher = new DeadLetterPublishingRecoverer(
                 kafkaOperations,
                 (record, ex) -> new TopicPartition(DLT_TOPIC, record.partition()));
+        dltPublisher.setFailIfSendResultIsError(true);
 
-        ConsumerRecordRecoverer recoverer = (record, ex) -> {
-            logDeadLetter(record, ex);
-            dltRecoverer.accept(record, ex);
-        };
+        ExponentialBackOffWithMaxRetries backOff = new ExponentialBackOffWithMaxRetries(MAX_RETRIES);
+        backOff.setInitialInterval(1_000L);
+        backOff.setMultiplier(2.0);
+        backOff.setMaxInterval(4_000L);
 
-        BackOff backOff = new ExponentialBackOffWithMaxRetries(3);
-        ((ExponentialBackOffWithMaxRetries) backOff).setInitialInterval(1_000L);
-        ((ExponentialBackOffWithMaxRetries) backOff).setMultiplier(2.0);
-        ((ExponentialBackOffWithMaxRetries) backOff).setMaxInterval(4_000L);
-
-        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
+        DefaultErrorHandler handler = new DefaultErrorHandler(deadLetterRecoverer(dltPublisher, mapper), backOff);
         handler.addNotRetryableExceptions(NonRetryableEventException.class);
         return handler;
     }
 
-    private static void logDeadLetter(ConsumerRecord<?, ?> record, Exception ex) {
-        String eventId = "desconocido";
-        Object value = record.value();
-        if (value instanceof String json && json.contains("\"eventId\"")) {
-            int start = json.indexOf("\"eventId\"");
-            int colon = json.indexOf(':', start);
-            int quote1 = json.indexOf('"', colon + 1);
-            int quote2 = json.indexOf('"', quote1 + 1);
-            if (quote1 > 0 && quote2 > quote1) {
-                eventId = json.substring(quote1 + 1, quote2);
+    /** Recoverer expuesto para tests: DLT primero; {@code evento-muerto} solo si confirma. */
+    static ConsumerRecordRecoverer deadLetterRecoverer(
+            DeadLetterPublishingRecoverer dltPublisher,
+            TimelineEventMapper mapper) {
+        return (record, ex) -> {
+            String eventId = eventId(record, mapper);
+            try {
+                dltPublisher.accept(record, ex);
+            } catch (RuntimeException dltFailure) {
+                log.error(
+                        "dlt-no-disponible topic={} partition={} offset={} eventId={} dlt={} motivo=\"{}\"",
+                        record.topic(),
+                        record.partition(),
+                        record.offset(),
+                        eventId,
+                        DLT_TOPIC,
+                        clean(String.valueOf(dltFailure.getMessage())));
+                throw dltFailure;
+            }
+            log.error(
+                    "evento-muerto topic={} partition={} offset={} eventId={} motivo=\"{}\" intentos={}",
+                    record.topic(),
+                    record.partition(),
+                    record.offset(),
+                    eventId,
+                    reason(ex),
+                    attempts(ex));
+        };
+    }
+
+    /** Veces que se ejecutó el procesamiento: 0 en un rechazo directo. */
+    static int attempts(Throwable ex) {
+        return find(ex, NonRetryableEventException.class) != null || find(ex, DeserializationException.class) != null
+                ? 0 : MAX_ATTEMPTS;
+    }
+
+    static String reason(Throwable ex) {
+        Throwable source = find(ex, NonRetryableEventException.class);
+        if (source == null) {
+            source = ex;
+            while (source.getCause() != null && source.getCause() != source) {
+                source = source.getCause();
             }
         }
-        Throwable root = ex;
-        while (root.getCause() != null && root.getCause() != root) {
-            root = root.getCause();
+        return clean(source.getMessage() != null ? source.getMessage() : source.getClass().getSimpleName());
+    }
+
+    private static String clean(String message) {
+        String clean = message.replace('"', '\'').replaceAll("\\s+", " ").trim();
+        return clean.length() > MAX_REASON_LENGTH ? clean.substring(0, MAX_REASON_LENGTH) : clean;
+    }
+
+    private static String eventId(ConsumerRecord<?, ?> record, TimelineEventMapper mapper) {
+        String eventId = record.value() instanceof String json ? mapper.peekEventId(json) : null;
+        return eventId == null ? "desconocido" : eventId;
+    }
+
+    private static <T extends Throwable> T find(Throwable ex, Class<T> type) {
+        for (Throwable current = ex; current != null; current = current.getCause()) {
+            if (type.isInstance(current)) {
+                return type.cast(current);
+            }
+            if (current.getCause() == current) {
+                break;
+            }
         }
-        String motivo = root.getMessage() != null ? root.getMessage() : root.getClass().getSimpleName();
-        // intentos: 0 si no recuperable; 4 si agotó reintentos (1 + 3)
-        int intentos = ex instanceof NonRetryableEventException
-                || (ex.getCause() instanceof NonRetryableEventException)
-                ? 0
-                : 4;
-        log.error(
-                "evento-muerto topic={} partition={} offset={} eventId={} motivo=\"{}\" intentos={}",
-                record.topic(),
-                record.partition(),
-                record.offset(),
-                eventId,
-                motivo,
-                intentos);
+        return null;
     }
 }

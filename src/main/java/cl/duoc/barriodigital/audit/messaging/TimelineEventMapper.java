@@ -23,6 +23,16 @@ public class TimelineEventMapper {
         this.objectMapper = objectMapper;
     }
 
+    /** Solo lee eventId; null si el JSON no se puede parsear. */
+    String peekEventId(String json) {
+        try {
+            JsonNode node = objectMapper.readTree(json).get("eventId");
+            return node == null || node.isNull() ? null : node.asText();
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
     public TimelineAuditCommand toCommand(String json) {
         TimelineEnvelope envelope = parse(json);
         validate(envelope);
