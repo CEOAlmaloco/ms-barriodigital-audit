@@ -6,6 +6,18 @@ public final class AuditSummaryFactory {
     private AuditSummaryFactory() {
     }
 
+    public static String forRequest(String eventType, String folio, String fromStatus, String toStatus) {
+        return switch (eventType) {
+            case "request.created" -> "Alta del tramite " + folio;
+            case "request.status-changed" -> "Cambio de estado de " + fromStatus + " a " + toStatus;
+            case "request.cancelled" -> "Cancelacion del tramite " + folio;
+            case "request.contact-logged" -> "Gestion de contacto del tramite " + folio;
+            case "request.assigned" -> "Asignacion del tramite " + folio;
+            case "request.rated" -> "Calificacion del tramite " + folio;
+            default -> eventType + " " + folio;
+        };
+    }
+
     public static String forTimeline(String resourceType, String resourceId, String action) {
         return switch (resourceType + "." + action) {
             case "procedure-type.created" -> "Alta del tipo de tramite " + resourceId;
