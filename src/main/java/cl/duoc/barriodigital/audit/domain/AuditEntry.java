@@ -88,7 +88,7 @@ public class AuditEntry {
     @Column(name = "details_json")
     private String detailsJson;
 
-    protected AuditEntry() {
+    public AuditEntry() {
     }
 
     public Long getId() {
