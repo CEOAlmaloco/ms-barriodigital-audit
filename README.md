@@ -1,6 +1,6 @@
 # ms-barriodigital-audit
 
-Timeline de **auditoría** (BarrioDigital). Consume eventos de `audit.timeline` y expone la API de lectura.
+Timeline de **auditoría** (BarrioDigital). Consume `requests.events` y `audit.timeline`.
 
 Puerto: **8087**
 
@@ -10,11 +10,11 @@ Oracle Autonomous, el mismo patrón que `ms-barriodigital-requests`: `.env` loca
 
 Dependencias base: Spring Boot 3.3.5, Java 21, `spring-kafka`, `data-jpa`, `web`, `actuator` y driver Oracle (+ wallet).
 
-## API de lectura (EP3-42)
+## Consumidor `requests.events` (EP3-40)
 
-- `GET /api/audit/timeline?requestId=` o `?folio=` (paginado, orden `occurredAt` asc).
-- `GET /api/audit/events` con filtros (`actorRole`, `eventType`, etc.) y paginación.
-- Solo Admin y Auditor (`X-User-Roles`); el resto recibe 403.
+- Grupo `audit-group`, concurrencia 3, `AckMode.RECORD` (offset después del commit en Oracle).
+- Errores: reintentos 1/2/4 s y DLT `requests.events.audit.DLT`.
+- `AuditTrailService` guarda actor, rol, tipo, trámite, folio, `sequence`, resumen, detalle y `occurredAt` (`uk_audit_entries_event_id`).
 
 ## Consumidor `audit.timeline` (EP3-41)
 
