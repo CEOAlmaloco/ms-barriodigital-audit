@@ -120,6 +120,19 @@ class AuditControllerTest {
     }
 
     @Test
+    void filtraPorComentarioDelVecino() throws Exception {
+        seedRequest("a1a1a1a1-a1a1-4a1a-a1a1-a1a1a1a1a1a1", "request.created",
+                Instant.parse("2026-11-10T13:00:00Z"), 1L, "Vecino");
+        seedRequest("b2b2b2b2-b2b2-4b2b-b2b2-b2b2b2b2b2b2", "request.citizen-comment",
+                Instant.parse("2026-11-11T13:00:00Z"), 2L, "Vecino");
+
+        mvc.perform(as(get(EVENTS).param("eventType", "request.citizen-comment"), "Auditor"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].eventType").value("request.citizen-comment"));
+    }
+
+    @Test
     void busquedaOrdenaPorOccurredAtDescendente() throws Exception {
         seedRequest("a1a1a1a1-a1a1-4a1a-a1a1-a1a1a1a1a1a1", "request.created",
                 Instant.parse("2026-11-10T13:00:00Z"), 1L, "Vecino");
