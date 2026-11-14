@@ -62,6 +62,36 @@ class RequestEventsConsumerTest {
     }
 
     @Test
+    void persisteComentarioDelVecinoSinTexto() {
+        UUID eventId = UUID.fromString("3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f");
+        listener.onMessage(record("""
+                {
+                  "eventId": "%s",
+                  "eventType": "request.citizen-comment",
+                  "schemaVersion": 1,
+                  "occurredAt": "2026-11-12T15:30:00.000Z",
+                  "producer": "requests",
+                  "traceId": "dd44ee55-ff66-4007-8112-233445566778",
+                  "sequence": 1075,
+                  "actor": { "id": "5d2b8e61-3f4a-4c7b-9a10-2e3f4a5b6c7d", "name": "Vecino Test", "role": "Vecino" },
+                  "payload": {
+                    "requestId": "7b6e1d44-2a18-4c90-9f01-88aa11bb22cc",
+                    "folio": "BD-2026-000123",
+                    "hasAttachment": true
+                  }
+                }
+                """.formatted(eventId)));
+
+        AuditEntry entry = repository.findByEventId(eventId).orElseThrow();
+        assertThat(entry.getEventType()).isEqualTo("request.citizen-comment");
+        assertThat(entry.getActorRole()).isEqualTo("Vecino");
+        assertThat(entry.getRequestId()).isEqualTo(REQUEST_ID);
+        assertThat(entry.getSequence()).isEqualTo(1075L);
+        assertThat(entry.getSummary()).isEqualTo("Comentario del vecino en el tramite BD-2026-000123");
+        assertThat(entry.getDetailsJson()).contains("\"hasAttachment\":true");
+    }
+
+    @Test
     void duplicadoNoInsertaSegundaFila() {
         listener.onMessage(record(statusChangedJson(EVENT_ID)));
         listener.onMessage(record(statusChangedJson(EVENT_ID)));

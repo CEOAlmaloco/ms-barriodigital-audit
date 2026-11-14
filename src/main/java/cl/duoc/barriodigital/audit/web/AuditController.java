@@ -1,6 +1,7 @@
 package cl.duoc.barriodigital.audit.web;
 
 import cl.duoc.barriodigital.audit.domain.AuditQueryService;
+import cl.duoc.barriodigital.audit.messaging.RequestEventTypes;
 import cl.duoc.barriodigital.audit.messaging.TimelineEventTypes;
 import cl.duoc.barriodigital.audit.web.dto.AuditPageView;
 import org.springframework.http.HttpStatus;
@@ -60,12 +61,7 @@ public class AuditController {
     private static final Set<String> EVENT_TYPES;
     static {
         Set<String> types = new LinkedHashSet<>();
-        types.add("request.created");
-        types.add("request.status-changed");
-        types.add("request.cancelled");
-        types.add("request.contact-logged");
-        types.add("request.assigned");
-        types.add("request.rated");
+        types.addAll(RequestEventTypes.KNOWN);
         types.addAll(TimelineEventTypes.KNOWN);
         EVENT_TYPES = Set.copyOf(types);
     }

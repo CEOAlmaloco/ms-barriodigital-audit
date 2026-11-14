@@ -11,7 +11,8 @@ public final class RequestEventTypes {
             "request.cancelled",
             "request.contact-logged",
             "request.assigned",
-            "request.rated"
+            "request.rated",
+            "request.citizen-comment"
     );
 
     private RequestEventTypes() {

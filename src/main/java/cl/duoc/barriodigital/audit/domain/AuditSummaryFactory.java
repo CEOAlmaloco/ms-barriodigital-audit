@@ -14,6 +14,7 @@ public final class AuditSummaryFactory {
             case "request.contact-logged" -> "Gestion de contacto del tramite " + folio;
             case "request.assigned" -> "Asignacion del tramite " + folio;
             case "request.rated" -> "Calificacion del tramite " + folio;
+            case "request.citizen-comment" -> "Comentario del vecino en el tramite " + folio;
             default -> eventType + " " + folio;
         };
     }
