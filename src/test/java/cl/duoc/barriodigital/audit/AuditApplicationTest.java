@@ -1,7 +1,7 @@
 package cl.duoc.barriodigital.audit;
 
 import cl.duoc.barriodigital.audit.domain.AuditTrailService;
-import cl.duoc.barriodigital.audit.messaging.AuditTimelineListener;
+import cl.duoc.barriodigital.audit.adapter.out.messaging.AuditTimelineListener;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
