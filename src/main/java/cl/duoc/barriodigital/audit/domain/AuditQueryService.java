@@ -1,7 +1,7 @@
 package cl.duoc.barriodigital.audit.domain;
 
-import cl.duoc.barriodigital.audit.web.dto.AuditEventView;
-import cl.duoc.barriodigital.audit.web.dto.AuditPageView;
+import cl.duoc.barriodigital.audit.adapter.in.web.dto.AuditEventView;
+import cl.duoc.barriodigital.audit.adapter.in.web.dto.AuditPageView;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
