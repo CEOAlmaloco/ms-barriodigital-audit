@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: ms-barriodigital-audit
+  version: 1.0.0
+servers:
+  - url: /
+paths:
+  /api/audit/timeline:
+    get:
+      operationId: timeline
+      responses:
+        '200':
+          description: OK
