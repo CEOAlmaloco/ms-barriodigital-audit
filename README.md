@@ -4,6 +4,14 @@ Timeline de **auditoría** (BarrioDigital). Consume `requests.events` y `audit.t
 
 Puerto: **8087**
 
+## Contratos
+
+Contratos vigentes en `barriodigital-infra` ([índice](https://github.com/CEOAlmaloco/barriodigital-infra/blob/develop/docs/contratos/README.md)):
+
+- [APIs report y audit](https://github.com/CEOAlmaloco/barriodigital-infra/blob/develop/docs/contratos/report-audit.md)
+- [Eventos Kafka](https://github.com/CEOAlmaloco/barriodigital-infra/blob/develop/docs/contratos/kafka-topicos.md)
+- [Publicación y consumo Kafka](https://github.com/CEOAlmaloco/barriodigital-infra/blob/develop/docs/contratos/kafka-publicacion.md)
+
 ## Persistencia
 
 Oracle Autonomous, el mismo patrón que `ms-barriodigital-requests`: `.env` local, wallet fuera del repo, Hibernate con `ddl-auto: update`.
