@@ -1,0 +1,248 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "ms-barriodigital-audit",
+    "version" : "1"
+  },
+  "paths" : {
+    "/api/audit/events" : {
+      "get" : {
+        "operationId" : "events",
+        "parameters" : [ {
+          "in" : "header",
+          "name" : "X-User-Roles",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "actorId",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "actorRole",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "resourceType",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "eventType",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "requestId",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "from",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuditPageView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "audit-controller" ]
+      }
+    },
+    "/api/audit/timeline" : {
+      "get" : {
+        "operationId" : "timeline",
+        "parameters" : [ {
+          "in" : "header",
+          "name" : "X-User-Roles",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "requestId",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "folio",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuditPageView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "audit-controller" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "ActorView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "sourceIp" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AuditEventView" : {
+        "type" : "object",
+        "properties" : {
+          "actor" : {
+            "$ref" : "#/components/schemas/ActorView"
+          },
+          "details" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "eventId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "eventType" : {
+            "type" : "string"
+          },
+          "folio" : {
+            "type" : "string"
+          },
+          "occurredAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "producer" : {
+            "type" : "string"
+          },
+          "requestId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "resourceId" : {
+            "type" : "string"
+          },
+          "resourceType" : {
+            "type" : "string"
+          },
+          "sequence" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "summary" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AuditPageView" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AuditEventView"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "totalElements" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "JsonNode" : {
+        "type" : "object"
+      }
+    }
+  }
+}
