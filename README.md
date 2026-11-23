@@ -4,6 +4,14 @@ Timeline de **auditoría** (BarrioDigital). Consume `requests.events` y `audit.t
 
 Puerto: **8087**
 
+## Contratos
+
+Contratos vigentes en `barriodigital-infra` ([índice](https://github.com/CEOAlmaloco/barriodigital-infra/blob/develop/docs/contratos/README.md)):
+
+- [APIs report y audit](https://github.com/CEOAlmaloco/barriodigital-infra/blob/develop/docs/contratos/report-audit.md)
+- [Eventos Kafka](https://github.com/CEOAlmaloco/barriodigital-infra/blob/develop/docs/contratos/kafka-topicos.md)
+- [Publicación y consumo Kafka](https://github.com/CEOAlmaloco/barriodigital-infra/blob/develop/docs/contratos/kafka-publicacion.md)
+
 ## Persistencia
 
 Oracle Autonomous, el mismo patrón que `ms-barriodigital-requests`: `.env` local, wallet fuera del repo, Hibernate con `ddl-auto: update`.
@@ -73,3 +81,8 @@ docker run --rm -p 8087:8087 `
 ## Git
 
 `.gitignore` cubre `target/`, `.env` y el wallet. Los secretos solo van en `.env`.
+
+## Contratos verificables
+
+- `contracts/openapi.json`: contrato HTTP del servicio, generado desde los controladores. `OpenApiContractTest` falla si una ruta, un parámetro o un cuerpo cambia sin actualizarlo. Para regenerarlo después de revisar el cambio: `./mvnw test -Dtest=OpenApiContractTest -Dopenapi.update=true`.
+- La CI corre las pruebas, busca secretos en los commits nuevos con gitleaks y escanea la imagen con Trivy. Falla si el cambio agrega una vulnerabilidad crítica que la rama destino no tenía; las existentes quedan en el resumen del job.
